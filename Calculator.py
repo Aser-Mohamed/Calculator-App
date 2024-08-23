@@ -1,3 +1,4 @@
+#Property of Aser Mohamed
 import tkinter as tk
 from tkinter import ttk
 
