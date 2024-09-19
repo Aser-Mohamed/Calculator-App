@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator-App README</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        h1, h2 {
+            color: #1a73e8;
+            text-align: center;
+            transition: color 0.3s;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .feature, .usage, .api, .customization, .github {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            background: #f9f9f9;
+        }
+        .feature:hover, .usage:hover, .api:hover, .customization:hover, .github:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 0;
+            background: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s, transform 0.3s;
+        }
+        .button:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        .dark-mode .container {
+            background: #2e2e2e;
+            color: #e0e0e0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        .dark-mode h1, .dark-mode h2 {
+            color: #bb86fc;
+        }
+        .dark-mode .feature, .dark-mode .usage, .dark-mode .api, .dark-mode .customization, .dark-mode .github {
+            background: #333;
+            border: 1px solid #444;
+        }
+        .toggle-mode {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 0;
+            background: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+        .toggle-mode:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .section-content.open {
+            max-height: 500px;
+        }
+        .section-content p, .section-content ul {
+            margin: 0;
+            padding: 10px;
+            background: #eee;
+            border-radius: 5px;
+        }
+    </style>
+    <script>
+        function toggleSection(sectionId) {
+            var content = document.getElementById(sectionId);
+            content.classList.toggle('open');
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Modern UI Calculator & Currency Converter</h1>
+        <p>Welcome to the <strong>Modern UI Calculator & Currency Converter</strong> project! This sleek and stylish application combines the functionality of a traditional calculator with a powerful currency converter, all wrapped in a modern, intuitive user interface.</p>
+        
+        <button class="toggle-mode" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+
+        <div class="section feature">
+            <img src="https://img.icons8.com/ios/50/000000/feature.png" alt="Feature Icon" class="feature-icon">
+            <h2 onclick="toggleSection('feature-content')">🚀 Features</h2>
+            <div id="feature-content" class="section-content">
+                <ul>
+                    <li><strong>Simple & Intuitive Calculator:</strong> Perform basic arithmetic operations with a clean and responsive interface.</li>
+                    <li><strong>Integrated Currency Converter:</strong> Convert between multiple currencies with real-time exchange rates.</li>
+                    <li><strong>Dark & Light Modes:</strong> Switch between dark and light themes to suit your preference.</li>
+                    <li><strong>Side Menu Navigation:</strong> Effortlessly switch between the calculator and currency converter with a stylish side menu.</li>
+                    <li><strong>Interactive Button Animations:</strong> Enjoy smooth animations and a modern user experience.</li>
+                    <li><strong>Persistent First Run Feature:</strong> Automatically open the GitHub repository on the first run to welcome users.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section usage">
+            <img src="https://img.icons8.com/ios/50/000000/usage.png" alt="Usage Icon" class="usage-icon">
+            <h2 onclick="toggleSection('usage-content')">📚 Usage</h2>
+            <div id="usage-content" class="section-content">
+                <ul>
+                    <li><strong>Calculator:</strong> Simply click on the buttons to perform arithmetic operations. Your calculation history will be stored in a list for easy reference.</li>
+                    <li><strong>Currency Converter:</strong> Enter the amount, select the currencies, and get the converted value instantly. Rates are updated automatically every minute.</li>
+                    <li><strong>Switch Modes:</strong> Toggle between light and dark modes by clicking the "Toggle Mode" button in the side menu.</li>
+                    <li><strong>Access GitHub Repo:</strong> Click the "GitHub Repository" button in the side menu to visit the project's GitHub page.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section api">
+            <img src="https://img.icons8.com/ios/50/000000/api.png" alt="API Icon" class="api-icon">
+            <h2 onclick="toggleSection('api-content')">🌐 API Integration</h2>
+            <div id="api-content" class="section-content">
+                <p>This app uses the <a href="https://www.exchangerate-api.com/" target="_blank" class="button">ExchangeRate-API</a> to fetch real-time currency conversion rates. Replace the placeholder <code>API_KEY</code> in the code with your own key to ensure the app functions correctly.</p>
+            </div>
+        </div>
+
+        <div class="section customization">
+            <img src="https://img.icons8.com/ios/50/000000/customization.png" alt="Customization Icon" class="customization-icon">
+            <h2 onclick="toggleSection('customization-content')">🛠️ Customization</h2>
+            <div id="customization-content" class="section-content">
+                <ul>
+                    <li><strong>Themes:</strong> Modify the <code>setStyleSheet</code> lines in the code to customize the color scheme and appearance of the app.</li>
+                    <li><strong>Button Animations:</strong> Adjust the <code>QPropertyAnimation</code> parameters to change the speed and style of the button animations.</li>
+                    <li><strong>Add More Features:</strong> Feel free to expand the functionality by adding more widgets or integrating additional APIs.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section github">
+            <img src="https://img.icons8.com/ios/50/000000/github.png" alt="GitHub Icon" class="github-icon">
+            <h2>🔗 GitHub</h2>
+            <p>Visit the <a href="https://github.com/Aser-Mohamed/Calculator-App" target="_blank" class="button">GitHub Repository</a> for the latest updates, issues, and contributions.</p>
+        </div>
+    </div>
+</body>
+</html>

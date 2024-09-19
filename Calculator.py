@@ -1,354 +1,261 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout, QPushButton, QLineEdit, QVBoxLayout, QHBoxLayout, QListWidget, QLabel, QComboBox, QFormLayout, QMessageBox
-from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect, QTimer, QThread
-import qtmodern.styles
-import qtmodern.windows
-import webbrowser
 import os
-import requests
 import sys
-import json
-from flask import Flask, jsonify
-from threading import Thread
+import requests
+import webbrowser
+from PySide6 import QtWidgets, QtCore, QtGui
 
-API_KEY = '8482bf59cdfccb689631bdef'
-API_URL = f'https://v6.exchangerate-api.com/v6/{API_KEY}/latest/USD'
-CURRENT_VERSION = "v1.0.0"  # Update this as needed
-
-def check_for_updates():
+# Windows-specific import for Mica effects
+if sys.platform == "win32":
     try:
-        response = requests.get("http://127.0.0.1:5000/check-update")
-        response.raise_for_status()
-        
-        update_info = response.json()
-        print("Update check response data:", update_info)
+        from win32mica import ApplyMica, MicaTheme, MicaStyle
+        USE_MICA = True
+    except ImportError:
+        USE_MICA = False
+else:
+    USE_MICA = False
 
-        if 'latest_version' in update_info and 'download_url' in update_info:
-            latest_version = update_info['latest_version']
-            download_url = update_info['download_url']
+# Constants for GitHub API and versioning
+GITHUB_API_RELEASES = "https://api.github.com/repos/Aser-Mohamed/Calculator-App/releases/latest"
+LOCAL_VERSION = "1.1.0"  # Your app's current version
 
-            if latest_version != CURRENT_VERSION:
-                print(f"New version available: {latest_version}")
-                print(f"Download here: {download_url}")
-                show_update_popup(download_url)
-            else:
-                print("No new updates found.")
-        else:
-            print("Expected keys are missing in the update information.")
-
-    except requests.RequestException as e:
-        print(f"Failed to check for updates: {e}")
-
-def show_update_popup(download_url):
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Icon.Information)
-    msg.setWindowTitle("Update Available")
-    msg.setText("A new version of the application is available.")
-    msg.setInformativeText("Click OK to download the latest version.")
-    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-    msg.buttonClicked.connect(lambda: webbrowser.open(download_url))
-    msg.exec()
-
-class CurrencyConverter(QWidget):
+class Calculator(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Currency Converter')
-        self.setGeometry(100, 100, 400, 300)
-        self.setStyleSheet("background-color: #2e2e2e;")
+        self.setWindowTitle("Enhanced Calculator")
+        self.setGeometry(100, 100, 400, 600)
+
+        # Apply Mica effect for Windows (if on Windows and Mica is available)
+        if USE_MICA:
+            ApplyMica(self.winId(), MicaTheme.AUTO, MicaStyle.DEFAULT)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         
-        self.create_widgets()
-        layout = QFormLayout(self)
-        layout.addRow(QLabel('Amount:'), self.amount_input)
-        layout.addRow(QLabel('From Currency:'), self.from_currency_combo)
-        layout.addRow(QLabel('To Currency:'), self.to_currency_combo)
-        layout.addRow(QLabel('Converted Amount:'), self.result_label)
+        # Initialize the UI
+        self.init_ui()
+        
+        # Initialize current input and operator
+        self.current_input = ""
+        self.previous_input = ""
+        self.operator = None
+
+        # Check for updates when the app starts
+        self.check_for_updates()
+
+    def init_ui(self):
+        """Initialize the calculator UI."""
+        layout = QtWidgets.QVBoxLayout(self)
+
+        # Result box
+        self.result = QtWidgets.QLabel("0")
+        self.result.setAlignment(QtCore.Qt.AlignRight)
+        self.result.setFixedHeight(100)  # Increase result box height
+        self.result.setStyleSheet("""\
+            font-size: 48px;
+            color: white;
+            padding: 20px;
+            background-color: #2c2c2c;
+            border-radius: 10px;
+        """)
+        layout.addWidget(self.result)
+
+        # Button layout
+        grid_layout = QtWidgets.QGridLayout()
+        grid_layout.setHorizontalSpacing(10)
+        grid_layout.setVerticalSpacing(10)
+
+        buttons = [
+            ('7', 0, 0), ('8', 0, 1), ('9', 0, 2), ('÷', 0, 3),
+            ('4', 1, 0), ('5', 1, 1), ('6', 1, 2), ('×', 1, 3),
+            ('1', 2, 0), ('2', 2, 1), ('3', 2, 2), ('-', 2, 3),
+            ('0', 3, 0, 1, 2), ('.', 3, 2), ('=', 3, 3),
+            ('C', 4, 0, 1, 2), ('⌫', 4, 2), ('+', 4, 3)
+        ]
+
+        for button_info in buttons:
+            if len(button_info) == 3:
+                text, row, col = button_info
+                rowspan = colspan = 1
+            elif len(button_info) == 5:
+                text, row, col, rowspan, colspan = button_info
+            else:
+                continue
+
+            button = QtWidgets.QPushButton(text)
+            button.setStyleSheet("""\
+                QPushButton {
+                    font-size: 20px;
+                    color: white;
+                    background-color: #333333;
+                    border: none;
+                    border-radius: 10px;
+                    padding: 15px;
+                }
+                QPushButton:hover {
+                    background-color: #444444;
+                }
+                QPushButton:pressed {
+                    background-color: #555555;
+                }
+            """)
+            button.clicked.connect(self.on_button_click)
+            grid_layout.addWidget(button, row, col, rowspan, colspan)
+
+        layout.addLayout(grid_layout)
+
+        # Create an update button to trigger updates manually
+        self.update_button = QtWidgets.QPushButton("Check for Update")
+        self.update_button.clicked.connect(self.check_for_updates)
+        layout.addWidget(self.update_button)
 
         self.setLayout(layout)
 
-        self.update_conversion()
+    def on_button_click(self):
+        """Handle button click events for calculator operations."""
+        button_text = self.sender().text()
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_conversion)
-        self.timer.start(60000)
+        if button_text in '0123456789.':
+            self.current_input += button_text
+            self.update_result()
 
-    def create_widgets(self):
-        self.amount_input = QLineEdit()
-        self.amount_input.setFont(QFont('Segoe UI', 18))
-        self.amount_input.setStyleSheet("background-color: #1e1e1e; color: #ffffff; border-radius: 10px; padding: 10px;")
-        self.amount_input.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.amount_input.textChanged.connect(self.update_conversion)
+        elif button_text in '+-×÷':
+            if self.operator:
+                self.calculate()
+            self.previous_input = self.current_input
+            self.current_input = ""
+            self.operator = button_text
 
-        self.from_currency_combo = QComboBox()
-        self.to_currency_combo = QComboBox()
+        elif button_text == 'C':
+            self.current_input = ""
+            self.previous_input = ""
+            self.operator = None
+            self.update_result()
 
-        self.result_label = QLabel()
-        self.result_label.setFont(QFont('Segoe UI', 18))
-        self.result_label.setStyleSheet("background-color: #1e1e1e; color: #ffffff; border-radius: 10px; padding: 10px;")
-        self.result_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        elif button_text == '=':
+            self.calculate()
+            self.operator = None
 
-        self.load_currency_list()
+        elif button_text == '⌫':
+            # Remove the last character from current input
+            self.current_input = self.current_input[:-1]
+            self.update_result()
 
-    def load_currency_list(self):
-        try:
-            response = requests.get(API_URL)
-            data = response.json()
-            currencies = list(data['conversion_rates'].keys())
+    def keyPressEvent(self, event):
+        """Handle key press events for calculator operations."""
+        key = event.key()
+        key_text = event.text()
 
-            self.from_currency_combo.addItems(currencies)
-            self.to_currency_combo.addItems(currencies)
-        except requests.RequestException as e:
-            print(f"Failed to load currency list: {e}")
+        if key_text in '0123456789.':
+            self.current_input += key_text
+            self.update_result()
 
-    def update_conversion(self):
-        try:
-            amount = float(self.amount_input.text())
-            from_currency = self.from_currency_combo.currentText()
-            to_currency = self.to_currency_combo.currentText()
+        elif key_text in '+-×÷':
+            if self.operator:
+                self.calculate()
+            self.previous_input = self.current_input
+            self.current_input = ""
+            self.operator = key_text
 
-            conversion_rate = self.get_conversion_rate(from_currency, to_currency)
-            converted_amount = amount * conversion_rate
-            self.result_label.setText(f"{converted_amount:.2f}")
-        except ValueError:
-            self.result_label.setText("Invalid input")
+        elif key == QtCore.Qt.Key_Backspace:
+            # Remove the last character from current input
+            self.current_input = self.current_input[:-1]
+            self.update_result()
 
-    def get_conversion_rate(self, from_currency, to_currency):
-        try:
-            response = requests.get(API_URL)
-            data = response.json()
-            rates = data['conversion_rates']
+        elif key == QtCore.Qt.Key_Enter or key == QtCore.Qt.Key_Return:
+            self.calculate()
+            self.operator = None
 
-            if from_currency == to_currency:
-                return 1.0
+        elif key_text == 'c' or key_text == 'C':
+            self.current_input = ""
+            self.previous_input = ""
+            self.operator = None
+            self.update_result()
 
-            return rates[to_currency] / rates[from_currency]
-        except requests.RequestException as e:
-            print(f"Failed to get conversion rate: {e}")
-            return 1.0
+        event.accept()
 
-class Calculator(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle('Modern UI Calculator')
-        self.setGeometry(100, 100, 800, 600)
-        self.setStyleSheet("background-color: #2e2e2e;")
-
-        self.converter_widget = CurrencyConverter()
-        self.current_widget = None
-
-        self.first_run_file = "first_run.txt"
-        if not os.path.exists(self.first_run_file):
-            self.open_github_profile()
-            with open(self.first_run_file, 'w') as file:
-                file.write('This file indicates that the app has run before.')
-
-        self.main_layout = QHBoxLayout(self)
-        
-        self.side_menu_container = QWidget()
-        self.side_menu_toggle_button = QPushButton("☰")
-        self.side_menu_toggle_button.setFont(QFont('Segoe UI', 18))
-        self.side_menu_toggle_button.setFixedSize(40, 40)
-        self.side_menu_toggle_button.setStyleSheet("""
-            background-color: #333333;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 20px;
-        """)
-        self.side_menu_toggle_button.clicked.connect(self.toggle_side_menu)
-
-        self.calculator_widget = QWidget()
-        self.create_widgets()
-        calculator_layout = QVBoxLayout(self.calculator_widget)
-        calculator_layout.addWidget(self.display)
-        calculator_layout.addLayout(self.button_layout())
-        calculator_layout.addWidget(self.history_list)
-        self.calculator_widget.setLayout(calculator_layout)
-
-        self.side_menu = QWidget()
-        self.create_side_menu()
-        side_menu_layout = QVBoxLayout(self.side_menu)
-        side_menu_layout.addWidget(self.github_button)
-        side_menu_layout.addWidget(self.mode_toggle_button)
-        side_menu_layout.addWidget(self.converter_toggle_button)
-        self.side_menu.setLayout(side_menu_layout)
-
-        side_menu_layout = QVBoxLayout(self.side_menu_container)
-        side_menu_layout.addWidget(self.side_menu_toggle_button)
-        side_menu_layout.addWidget(self.side_menu)
-        self.side_menu_container.setLayout(side_menu_layout)
-        self.side_menu_container.setFixedWidth(250)
-
-        self.main_layout.addWidget(self.side_menu_container)
-        self.main_layout.addWidget(self.calculator_widget)
-
-        self.side_menu_visible = True
-        self.current_widget = self.calculator_widget
-
-        self.animation = QPropertyAnimation(self.side_menu_container, b"geometry")
-        self.animation.setDuration(300)
-        self.animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
-
-        self.button_press_animation = QPropertyAnimation()
-        self.button_press_animation.setDuration(200)
-        self.button_press_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
-
-        self.update_ui()
-    
-    def create_widgets(self):
-        self.display = QLineEdit()
-        self.display.setFont(QFont('Segoe UI', 24))
-        self.display.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.display.setStyleSheet("background-color: #1e1e1e; color: #ffffff; border-radius: 10px; padding: 20px;")
-        self.display.setReadOnly(True)
-
-        self.history_list = QListWidget()
-        self.history_list.setStyleSheet("background-color: #1e1e1e; color: #ffffff;")
-
-    def button_layout(self):
-        buttons = [
-            ('7', '8', '9', '/'),
-            ('4', '5', '6', '*'),
-            ('1', '2', '3', '-'),
-            ('C', '0', '=', '+')
-        ]
-        layout = QGridLayout()
-
-        for row, row_buttons in enumerate(buttons):
-            for col, button_text in enumerate(row_buttons):
-                button = QPushButton(button_text)
-                button.setFont(QFont('Segoe UI', 18))
-                button.setStyleSheet("""
-                    background-color: #333333;
-                    color: #FFFFFF;
-                    border: none;
-                    border-radius: 10px;
-                    padding: 10px;
-                """)
-                button.clicked.connect(self.button_clicked)
-                layout.addWidget(button, row, col)
-
-        return layout
-
-    def button_clicked(self):
-        button = self.sender()
-        text = button.text()
-
-        if text == 'C':
-            self.display.clear()
-        elif text == '=':
+    def calculate(self):
+        """Perform calculation based on the operator."""
+        if self.operator and self.previous_input:
             try:
-                expression = self.display.text()
-                result = eval(expression)
-                self.display.setText(str(result))
-                self.history_list.addItem(f"{expression} = {result}")
+                # Replace ÷ with / and × with * for calculation
+                expression = self.current_input.replace('÷', '/').replace('×', '*')
+
+                # Construct the full expression for evaluation
+                full_expression = f"{self.previous_input} {self.operator.replace('×', '*').replace('÷', '/')} {expression}"
+
+                # Evaluate the expression
+                result = eval(full_expression)
+
+                # Convert result to integer if it's a whole number
+                if isinstance(result, float) and result.is_integer():
+                    result = int(result)
+
+                # Update current input with the result
+                self.current_input = str(result)
+                self.update_result()
+
+            except (SyntaxError, ZeroDivisionError) as e:
+                # Handle specific errors for syntax issues or division by zero
+                self.current_input = "Error"
+                self.update_result()
             except Exception as e:
-                self.display.setText("Error")
-        else:
-            self.display.setText(self.display.text() + text)
+                # Handle any other unforeseen errors
+                self.current_input = "Error"
+                self.update_result()
 
-    def create_side_menu(self):
-        self.github_button = QPushButton('Open GitHub')
-        self.github_button.setFont(QFont('Segoe UI', 18))
-        self.github_button.setStyleSheet("""
-            background-color: #333333;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 10px;
-            padding: 20px;
-        """)
-        self.github_button.clicked.connect(self.open_github_profile)
+    def update_result(self):
+        """Update the display result."""
+        self.result.setText(self.current_input if self.current_input else "0")
 
-        self.mode_toggle_button = QPushButton('Toggle Mode')
-        self.mode_toggle_button.setFont(QFont('Segoe UI', 18))
-        self.mode_toggle_button.setStyleSheet("""
-            background-color: #333333;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 10px;
-            padding: 20px;
-        """)
-        self.mode_toggle_button.clicked.connect(self.toggle_mode)
+    def check_for_updates(self):
+        """Check GitHub for the latest release and compare with the local version."""
+        try:
+            response = requests.get(GITHUB_API_RELEASES)
+            response.raise_for_status()
 
-        self.converter_toggle_button = QPushButton('Currency Converter')
-        self.converter_toggle_button.setFont(QFont('Segoe UI', 18))
-        self.converter_toggle_button.setStyleSheet("""
-            background-color: #333333;
-            color: #FFFFFF;
-            border: none;
-            border-radius: 10px;
-            padding: 20px;
-        """)
-        self.converter_toggle_button.clicked.connect(self.toggle_converter)
+            latest_release = response.json()
+            latest_version = latest_release['tag_name']
 
-    def toggle_side_menu(self):
-        if self.side_menu_visible:
-            self.side_menu.setFixedWidth(0)
-        else:
-            self.side_menu.setFixedWidth(250)
+            # Check if a newer version exists
+            if self.is_newer_version(latest_version, LOCAL_VERSION):
+                # Prompt user if they want to visit the GitHub releases page
+                update_prompt = QtWidgets.QMessageBox.question(
+                    self, "New Update Available",
+                    f"Version {latest_version} is available. Do you want to download it?",
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+                )
+                if update_prompt == QtWidgets.QMessageBox.Yes:
+                    # Find the 'Calculator-App.zip' asset in the release assets
+                    for asset in latest_release['assets']:
+                        if asset['name'] == 'Calculator-App.zip':
+                            download_url = asset['browser_download_url']
+                            # Open the download URL in the user's default browser
+                            webbrowser.open(download_url)
+                            QtWidgets.QMessageBox.information(
+                                self, "Redirecting",
+                                "You will be redirected to the download page. Please download and replace the files manually."
+                            )
+                            break
+                else:
+                    QtWidgets.QMessageBox.information(
+                        self, "Update Declined",
+                        "You have declined the update."
+                    )
+            # No update message if no update is available
+        except requests.exceptions.RequestException as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Update Error",
+                f"Error checking for updates: {e}"
+            )
 
-        self.side_menu_visible = not self.side_menu_visible
+    def is_newer_version(self, latest_version, local_version):
+        """Compare the latest version from GitHub with the local version."""
+        latest_version_parts = list(map(int, latest_version.lstrip('v').split('.')))
+        local_version_parts = list(map(int, local_version.split('.')))
 
-    def open_github_profile(self):
-        webbrowser.open('https://github.com/Aser-Mohamed/Calculator-App')
-
-    def toggle_mode(self):
-        current_mode = QApplication.instance().style().objectName()
-
-        if current_mode == "dark":
-            qtmodern.styles.light(QApplication.instance())
-        else:
-            qtmodern.styles.dark(QApplication.instance())
-
-    def toggle_converter(self):
-        if self.current_widget is self.calculator_widget:
-            self.current_widget.hide()
-            self.current_widget = self.converter_widget
-        else:
-            self.current_widget.hide()
-            self.current_widget = self.calculator_widget
-
-        self.main_layout.addWidget(self.current_widget)
-        self.current_widget.show()
-
-    def update_ui(self):
-        self.show()
-        check_for_updates()
-
-    def on_button_pressed(self, button):
-        original_geometry = button.geometry()
-
-        self.button_press_animation.setTargetObject(button)
-        self.button_press_animation.setPropertyName(b"geometry")
-        self.button_press_animation.setStartValue(original_geometry)
-        self.button_press_animation.setEndValue(QRect(original_geometry.x() + 2, original_geometry.y() + 2, original_geometry.width() - 4, original_geometry.height() - 4))
-        self.button_press_animation.start()
-    
-    def on_button_released(self, button):
-        self.button_press_animation.setDirection(QPropertyAnimation.Direction.Backward)
-        self.button_press_animation.start()
-
-# Update check server
-app = Flask(__name__)
-
-@app.route('/check-update', methods=['GET'])
-def check_update():
-    latest_version = "v1.1.0"
-    download_url = "https://github.com/Aser-Mohamed/Calculator-App/releases/latest/download/Calculator-App.zip"
-    return jsonify({"latest_version": latest_version, "download_url": download_url})
-
-def run_flask():
-    app.run(debug=False, port=5000)
+        return latest_version_parts > local_version_parts
 
 if __name__ == "__main__":
-    flask_thread = Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
-
-    app = QApplication(sys.argv)
-    qtmodern.styles.dark(app)
-
-    calculator = Calculator()
-
-    window = qtmodern.windows.ModernWindow(calculator)
+    app = QtWidgets.QApplication(sys.argv)
+    window = Calculator()
     window.show()
-
     sys.exit(app.exec())
