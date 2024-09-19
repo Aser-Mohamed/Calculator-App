@@ -1,47 +1,36 @@
-# 🧮 Modern UI Calculator & Currency Converter
+# Calculator-App
+# 🧮 Modern UI Calculator with Mica Effect
 
-Welcome to the **Modern UI Calculator & Currency Converter** project! This sleek and stylish application combines the functionality of a traditional calculator with a powerful currency converter, all wrapped in a modern, intuitive user interface.
+Welcome to the **Modern UI Calculator** project! This application features a sleek and stylish design, complete with a Mica effect for a contemporary look. It combines basic arithmetic functions with an advanced, user-friendly interface.
 
 ---
 
 ## 🚀 Features
-
-- **Simple & Intuitive Calculator**  
-  Perform basic arithmetic operations with a clean and responsive interface.
-
-- **Integrated Currency Converter**  
-  Convert between multiple currencies with real-time exchange rates.
-
-- **Dark & Light Modes**  
-  Switch between dark and light themes to suit your preference.
-
-- **Side Menu Navigation**  
-  Effortlessly switch between the calculator and currency converter with a stylish side menu.
-
-- **Interactive Button Animations**  
-  Enjoy smooth animations and a modern user experience.
-
-- **Persistent First Run Feature**  
-  Automatically open the GitHub repository on the first run to welcome users.
+- **Advanced Calculator Functionality**  
+  Perform basic arithmetic operations with a modern, intuitive interface. Supports mathematical expressions with dynamic updates.
+- **Mica Effect for Modern Look**  
+  Enjoy a visually appealing Mica effect that integrates seamlessly with the Windows 11 style.
+- **Smooth Animations**  
+  Experience smooth button animations and transitions for a polished user experience.
+- **Side Menu with GitHub Integration**  
+  Navigate easily between the calculator and access the project's GitHub repository directly from the side menu.
+- **Responsive Design**  
+  The app is designed to work well on various screen sizes with a clean, modern aesthetic.
 
 ---
 
 ## 💻 Installation
-
 To run this project locally, follow these steps:
-
 1. **Clone the Repository**:
     ```bash
     git clone https://github.com/Aser-Mohamed/Calculator-App.git
     cd Calculator-App
     ```
-
 2. **Install Dependencies**:
     Ensure you have Python installed. Then, install the necessary packages:
     ```bash
-    pip install PyQt6 qtmodern requests
+    pip install PySide6 requests
     ```
-
 3. **Run the Application**:
     ```bash
     python calculator.py
@@ -50,44 +39,33 @@ To run this project locally, follow these steps:
 ---
 
 ## 📚 Usage
-
 - **Calculator**  
-  Simply click on the buttons to perform arithmetic operations. Your calculation history will be stored in a list for easy reference.
-
-- **Currency Converter**  
-  Enter the amount, select the currencies, and get the converted value instantly. Rates are updated automatically every minute.
-
-- **Switch Modes**  
-  Toggle between light and dark modes by clicking the "Toggle Mode" button in the side menu.
-
-- **Access GitHub Repo**  
-  Click the "GitHub Repository" button in the side menu to visit the project's GitHub page.
+  Click the buttons to perform arithmetic operations. Mathematical expressions like `+`, `-`, `×`, and `÷` will be displayed in the result box.
+- **Side Menu**  
+  Access the GitHub repository via the side menu to stay updated with the latest changes and contributions.
+- **Animations**  
+  Enjoy interactive button animations that enhance the user experience.
 
 ---
 
 ## 🌐 API Integration
-
-This app uses the [ExchangeRate-API](https://www.exchangerate-api.com/) to fetch real-time currency conversion rates. Replace the placeholder `API_KEY` in the code with your own key to ensure the app functions correctly.
+This app uses the [ExchangeRate-API](https://www.exchangerate-api.com/) for currency conversion features. Make sure to replace the placeholder `API_KEY` in the code with your own key if currency conversion is enabled in the future.
 
 ---
 
 ## 🛠️ Customization
-
 - **Themes**  
-  Modify the `setStyleSheet` lines in the code to customize the color scheme and appearance of the app.
-
+  Adjust the Mica effect and overall color scheme by modifying the `setStyleSheet` and related parameters in the code.
 - **Button Animations**  
-  Adjust the `QPropertyAnimation` parameters to change the speed and style of the button animations.
-
-- **Add More Features**  
-  Feel free to expand the functionality by adding more widgets or integrating additional APIs.
+  Customize the `QPropertyAnimation` settings to change the look and feel of the button animations.
+- **Feature Expansion**  
+  Enhance the application by adding new features or integrating additional functionalities as needed.
 
 ---
 
 ## 🔗 GitHub
-
-Visit the [GitHub Repository](https://github.com/Aser-Mohamed/Calculator-App) for the latest updates, issues, and contributions.
+Visit the [GitHub Repository](https://github.com/Aser-Mohamed/Calculator-App) for the latest updates, issues, and to contribute to the project.
 
 ---
 
-Thank you for checking out the Modern UI Calculator & Currency Converter! 🚀
+Thank you for exploring the Modern UI Calculator! 🚀
